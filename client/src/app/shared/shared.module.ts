@@ -1,11 +1,19 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MaterialModule } from './material/material.module';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
+import { ServicesModule } from './services/services.module';
 
 @NgModule({
   imports: [
     CommonModule,
-    MaterialModule
+    BrowserAnimationsModule,
+    MaterialModule,
+    ServicesModule,
+  ],
+  exports: [
+    MaterialModule,
+    ServicesModule,
   ],
   declarations: []
 })

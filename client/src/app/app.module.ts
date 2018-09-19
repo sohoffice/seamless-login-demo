@@ -1,11 +1,11 @@
-import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import {BrowserModule} from '@angular/platform-browser';
+import {NgModule} from '@angular/core';
 
-import { AppRoutingModule } from './app-routing.module';
-import { AppComponent } from './app.component';
-import { CommonModule } from './common/common.module';
-import { SharedModule } from './shared/shared.module';
-import { MaterialModule } from './shared/material/material.module';
+import {AppRoutingModule} from './app-routing.module';
+import {AppComponent} from './app.component';
+import {SharedModule} from './shared/shared.module';
+import { PunchModule } from './punch/punch.module';
+import { ModelsModule } from './models/models.module';
 
 @NgModule({
   declarations: [
@@ -14,7 +14,9 @@ import { MaterialModule } from './shared/material/material.module';
   imports: [
     BrowserModule,
     AppRoutingModule,
-    SharedModule
+    SharedModule,
+    PunchModule,
+    ModelsModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

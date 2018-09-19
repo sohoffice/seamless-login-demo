@@ -1,5 +1,7 @@
 package actors
 
+import java.time.Instant
+
 import akka.actor.{Actor, ActorRef, Props}
 import akka.event.{LogMarker, MarkerLoggingAdapter}
 
@@ -9,7 +11,9 @@ class AuthPortalActor(out: ActorRef) extends Actor {
 
   def receive = {
     case msg: String =>
-      out ! ("I received your message: " + msg)
+      val now = Instant.now
+      log.debug(s"Received $msg")
+      out ! s"I received your message: $msg on ${now.toString}"
   }
 }
 
