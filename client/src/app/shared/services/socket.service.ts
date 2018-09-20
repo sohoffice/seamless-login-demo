@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {from, Observable, Subject, Observer} from 'rxjs';
 import {map} from 'rxjs/operators';
 
-const AuthWorkerUrl = 'ws://localhost:9000/auth';
+const AuthWorkerUrl = 'ws://centaurium.sohoffice.local:9000/auth';
 
 @Injectable()
 export class SocketService {

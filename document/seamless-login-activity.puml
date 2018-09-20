@@ -1,0 +1,23 @@
+@startuml
+|SPA|
+start
+:Show login options
+to choose provider;
+:Open websocket channel
+to server;
+|Server|
+:Generate handle to client;
+|SPA|
+:Go to 3rd party login page
+in a separate window;
+|Auth provider window|
+:Show login window;
+:User authorize;
+|Server|
+:Receive callback;
+:Push authenticated message
+to SPA;
+|SPA|
+:User is authenticated;
+stop
+@enduml

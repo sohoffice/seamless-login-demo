@@ -4,8 +4,8 @@ import {NgModule} from '@angular/core';
 import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
 import {SharedModule} from './shared/shared.module';
-import { PunchModule } from './punch/punch.module';
 import { ModelsModule } from './models/models.module';
+import {CheckInModule} from "./check-in/check-in.module";
 
 @NgModule({
   declarations: [
@@ -15,7 +15,7 @@ import { ModelsModule } from './models/models.module';
     BrowserModule,
     AppRoutingModule,
     SharedModule,
-    PunchModule,
+    CheckInModule,
     ModelsModule,
   ],
   providers: [],

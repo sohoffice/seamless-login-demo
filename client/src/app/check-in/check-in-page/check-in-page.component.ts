@@ -11,12 +11,14 @@ interface MessageRecord {
 }
 
 @Component({
-  selector: 'sl-punch-page',
-  templateUrl: './punch-page.component.html',
-  styleUrls: ['./punch-page.component.scss']
+  selector: 'sl-check-in-page',
+  templateUrl: './check-in-page.component.html',
+  styleUrls: ['./check-in-page.component.scss']
 })
-export class PunchPageComponent implements OnInit, OnDestroy {
+export class CheckInPageComponent implements OnInit, OnDestroy {
   private authWorker: SocketWorker<string>;
+
+  id: string = Math.round(Math.random() * 10000.0).toString();
 
   messages: MessageRecord[] = [];
   private sub1: Subscription;
@@ -32,7 +34,7 @@ export class PunchPageComponent implements OnInit, OnDestroy {
         this.pushMessage.bind(this)
       )
     ).subscribe(x => {
-      console.log('Punch message: ', x);
+      console.log('remote message: ', x);
     });
   }
 
@@ -41,7 +43,7 @@ export class PunchPageComponent implements OnInit, OnDestroy {
   }
 
   onPunchIn() {
-    this.authWorker.send('something');
+    this.authWorker.send(`From ${this.id}`);
   }
 
   private pushMessage(msg: string) {

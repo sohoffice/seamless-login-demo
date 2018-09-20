@@ -1,0 +1,15 @@
+@startuml
+|SPA|
+start
+:login button;
+:Show login options;
+|Auth provider|
+:Go to 3rd party login page;
+:User authorize;
+|Server|
+:receive callback;
+|SPA|
+:reload application
+to previous page;
+stop
+@enduml

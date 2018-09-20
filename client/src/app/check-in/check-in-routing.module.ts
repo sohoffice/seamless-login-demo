@@ -1,9 +1,9 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import {PunchPageComponent} from './punch-page/punch-page.component';
+import {CheckInPageComponent} from "./check-in-page/check-in-page.component";
 
 const routes: Routes = [
-  { path: 'punch',  component: PunchPageComponent }
+  { path: 'punch',  component: CheckInPageComponent }
 ];
 
 @NgModule({
@@ -12,4 +12,4 @@ const routes: Routes = [
   ],
   exports: [RouterModule]
 })
-export class PunchRoutingModule { }
+export class CheckInRoutingModule { }
