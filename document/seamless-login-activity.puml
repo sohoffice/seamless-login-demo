@@ -10,7 +10,7 @@ to server;
 |SPA|
 :Go to 3rd party login page
 in a separate window;
-|Auth provider window|
+|Auth provider window (New Window)|
 :Show login window;
 :User authorize;
 |Server|

@@ -3,7 +3,7 @@
 start
 :login button;
 :Show login options;
-|Auth provider|
+|Auth provider (Redirect)|
 :Go to 3rd party login page;
 :User authorize;
 |Server|

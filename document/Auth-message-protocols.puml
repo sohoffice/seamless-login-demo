@@ -1,0 +1,15 @@
+@startuml
+Actor User
+Control Server
+Boundary "Auth provider"
+
+User -> Server: HELO
+Server -> User: ACK
+User -> Server: AUTH
+Server -> User: HANDLE <some handle>
+
+User -> "Auth provider": (Open login page)
+"Auth provider" -> Server: (Callback)
+
+Server -> User: TOKEN <token>
+@enduml
