@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {SocketService} from './socket.service';
+import {IdentityService} from './identity.service';
 
 @NgModule({
   imports: [
@@ -8,7 +9,8 @@ import {SocketService} from './socket.service';
   ],
   declarations: [],
   providers: [
-    SocketService
+    SocketService,
+    IdentityService
   ]
 })
 export class ServicesModule { }

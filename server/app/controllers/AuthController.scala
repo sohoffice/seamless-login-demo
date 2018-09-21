@@ -2,13 +2,13 @@ package controllers
 
 import java.util.concurrent.TimeUnit
 
+import actors.UserAuthActor.AuthMessage
 import actors.{AuthEventBus, AuthWorkerActor, UserAuthActor}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.stream.Materializer
 import javax.inject.{Inject, Named}
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.{AbstractController, ControllerComponents, WebSocket}
-import akka.pattern.ask
 import akka.util.Timeout
 
 import scala.concurrent.ExecutionContext
@@ -25,7 +25,7 @@ class AuthController @Inject()(
     *
     * @return
     */
-  def channel = WebSocket.accept[String, String] { request =>
+  def channel = WebSocket.accept[AuthMessage, AuthMessage] { request =>
     ActorFlow.actorRef { out =>
       UserAuthActor.props(out, authEventBus)
     }

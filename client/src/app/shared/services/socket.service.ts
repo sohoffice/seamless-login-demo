@@ -1,8 +1,6 @@
 import {Injectable} from '@angular/core';
-import {from, Observable, Subject, Observer} from 'rxjs';
-import {map} from 'rxjs/operators';
-
-const AuthWorkerUrl = 'ws://centaurium.sohoffice.local:9000/auth';
+import {from, Observable, Observer, Subject} from 'rxjs';
+import {publishReplay, refCount} from 'rxjs/operators';
 
 @Injectable()
 export class SocketService {
@@ -15,44 +13,41 @@ export class SocketService {
   constructor() {
   }
 
-  getWorker<T>(id: WorkerId): SocketWorker<T> {
-    const workerId = id.toString();
-    if (!(workerId in this.socketWorkers)) {
-      this.socketWorkers[workerId] = new SocketWorker(this.getUrl(id));
+  getWorker<T>(url: string, reader: (s: string) => T, writer: (msg: T) => string): SocketWorker<T> {
+    if (!(url in this.socketWorkers)) {
+      this.socketWorkers[url] = new SocketWorker(url, reader, writer);
     }
-    return this.socketWorkers[workerId];
+    return this.socketWorkers[url];
   }
 
-  private getUrl(id: WorkerId): string {
-    if (id === WorkerId.auth) {
-      return AuthWorkerUrl;
-    }
-  }
-}
-
-export enum WorkerId {
-  auth = 'auth'
 }
 
 export class SocketWorker<T> {
   private readonly subject: Subject<T>;
   private socket: WebSocket;
 
-  constructor(url: string) {
+  constructor(url: string,
+              private reader: (s: string) => T,
+              private writer: (msg: T) => string) {
     const socket = this.socket = new WebSocket(url);
 
-    const observable = Observable.create(
+    const observable: Observable<T> = Observable.create(
       (obs: Observer<T>) => {
-        socket.onmessage = obs.next.bind(obs);
+        socket.onmessage = (msg: MessageEvent) => {
+          obs.next(this.reader(msg.data as string));
+        };
         socket.onerror = obs.error.bind(obs);
         socket.onclose = obs.complete.bind(obs);
         return socket.close.bind(socket);
       }
+    ).pipe(
+      publishReplay(), refCount()
     );
     const observer = {
-      next: (data: any) => {
+      next: (data: T) => {
         if (socket.readyState === WebSocket.OPEN) {
-          socket.send(data);
+          const s = this.writer(data);
+          socket.send(s);
         }
       }
     };
@@ -61,17 +56,14 @@ export class SocketWorker<T> {
   }
 
   asObservable(): Observable<T> {
-    return from(this.subject).pipe(
-      map(this.extractMessagePayload.bind(this))
-    );
+    return from(this.subject);
   }
 
   send(msg: T) {
     this.subject.next(msg);
-    // this.socket.send(msg);
   }
 
-  private extractMessagePayload(msg: MessageEvent): T {
-    return msg.data as T;
+  close() {
   }
+
 }

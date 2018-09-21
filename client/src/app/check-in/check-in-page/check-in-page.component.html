@@ -2,19 +2,29 @@
   <mat-card-header>
     <h1>Class check in application</h1>
   </mat-card-header>
-  <mat-card-content class="punch-ins">
-    <div class="row">
-      <div class="col-6">
-      </div>
-      <mat-list class="col-6">
-        <mat-list-item *ngFor="let msg of messages.reverse()"> #{{msg.no}}, {{msg.message}}</mat-list-item>
-      </mat-list>
-    </div>
+  <mat-card-content class="check-ins">
+    <mat-grid-list cols="2">
+      <mat-grid-tile>
+        <mat-card class="h-75 w-75">
+          <mat-card-header>
+            <h4>Students</h4>
+          </mat-card-header>
+        </mat-card>
+      </mat-grid-tile>
+      <mat-grid-tile>
+        <mat-card class="h-75 w-75">
+          <mat-card-header>
+            <h4>Log messages</h4>
+          </mat-card-header>
+          <mat-card-content>
+            <div *ngFor="let msg of messages.reverse()">- {{msg}}</div>
+          </mat-card-content>
+        </mat-card>
+      </mat-grid-tile>
+    </mat-grid-list>
   </mat-card-content>
   <mat-card-actions>
-    <button mat-button disabled>Student no: tbd</button>
-    <button mat-button disabled>Auth handle: tbd</button>
-    <button mat-button disabled>Client id: {{id}}</button>
-    <button mat-button (click)="onPunchIn()">Check in</button>
+    <button mat-button (click)="onCheckIn()">Check in</button>
+    <button mat-button (click)="onOpenLoginDialog()" *ngIf="handle !== undefined">Open login dialog</button>
   </mat-card-actions>
 </mat-card>

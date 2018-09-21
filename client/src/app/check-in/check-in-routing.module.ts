@@ -3,7 +3,7 @@ import { Routes, RouterModule } from '@angular/router';
 import {CheckInPageComponent} from "./check-in-page/check-in-page.component";
 
 const routes: Routes = [
-  { path: 'punch',  component: CheckInPageComponent }
+  { path: 'check-in',  component: CheckInPageComponent }
 ];
 
 @NgModule({

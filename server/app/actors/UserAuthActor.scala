@@ -11,10 +11,19 @@ import play.api.libs.json.{Json, Reads, Writes}
 
 import scala.concurrent.ExecutionContext
 
+/** The server side component to handle websocket chanel of exactly one client.
+  *
+  * @param out
+  * @param eventBus
+  * @param ec
+  */
 class UserAuthActor(
   out: ActorRef,
   eventBus: AuthEventBus
 )(implicit ec: ExecutionContext) extends Actor {
+
+  import UserAuthActor._
+
   private val logger = LoggerFactory.getLogger(this.getClass)
   private val marker = MarkerFactory.getMarker(self.path.name)
 
@@ -26,18 +35,21 @@ class UserAuthActor(
   eventBus.subscribe(self, "auth-event-bus")
 
   def receive = {
-    case msg: String =>
-      logger.debug(marker, s"Received $msg for actor $id")
+    case AuthMessage(cmd, _, _) if cmd == AuthCommand.HELO =>
+      logger.debug(marker, "Client initiate auth flow.")
       if(!started) {
         eventBus.publish(AuthEventBus.Start(id))
         started = true
+      } else {
+        logger.warn(s"Auth flow already started, ignore the request.")
       }
-    case _: AuthEventBus.Start =>
-      out ! "start authentication"
-    case _: AuthEventBus.Authenticated =>
-      out ! "authenticated"
+      out ! ACK
+    case AuthMessage(cmd, _, _) if cmd == AuthCommand.AUTH =>
+      out ! createHandleMessage(id)
+    case AuthEventBus.Authenticated(handle) if handle == id =>
+      out ! createTokenMessage("some token")
     case x =>
-      logger.warn(marker, s"Receive unknown message of type ${x.getClass.getName}. $x")
+      logger.trace(marker, s"Receive unknown message of type ${x.getClass.getName}. $x")
   }
 
   override def aroundPostStop(): Unit = {
@@ -133,6 +145,12 @@ object UserAuthActor {
       *
       */
     val TOKEN = Value
+
+    /** Dummy message, used by the client to make sure the channel is still open.
+      * Server will not respond to this command.
+      *
+      * - Sent by: Client
+      */
     val PING = Value
 
     implicit def authCommandWrites(implicit w: Writes[String]): Writes[AuthCommand] = Writes[AuthCommand] { ct =>
@@ -145,24 +163,20 @@ object UserAuthActor {
 
   }
 
-  case class SimpleAuthMessage(
-    command: AuthCommand
-  )
-
-  implicit val authMessageFormat = Json.format[SimpleAuthMessage]
-
-  case class HandleAuthMessage(
+  case class AuthMessage(
     command: AuthCommand,
-    handle: String
+    handle: Option[String] = None,
+    token: Option[String] = None
   )
 
-  implicit val handleAuthMessageFormat = Json.format[HandleAuthMessage]
+  implicit val authMessageFormat = Json.format[AuthMessage]
 
-  case class TokenAuthMessage(
-    command: AuthCommand,
-    token: String
-  )
+  lazy val ACK = AuthMessage(AuthCommand.ACK)
 
-  implicit val tokenAuthMessageFormat = Json.format[TokenAuthMessage]
+  def createHandleMessage(handle: String) = AuthMessage(AuthCommand.HANDLE, handle = Some(handle))
+  def createTokenMessage(token: String) = AuthMessage(AuthCommand.TOKEN, token = Some(token))
 
+  import play.api.mvc.WebSocket.MessageFlowTransformer
+
+  implicit val messageFlowTransformer = MessageFlowTransformer.jsonMessageFlowTransformer[AuthMessage, AuthMessage]
 }

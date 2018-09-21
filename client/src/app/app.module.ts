@@ -4,8 +4,8 @@ import {NgModule} from '@angular/core';
 import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
 import {SharedModule} from './shared/shared.module';
-import { ModelsModule } from './models/models.module';
-import {CheckInModule} from "./check-in/check-in.module";
+import {ModelsModule} from './models/models.module';
+import {CheckInModule} from './check-in/check-in.module';
 
 @NgModule({
   declarations: [
@@ -18,7 +18,17 @@ import {CheckInModule} from "./check-in/check-in.module";
     CheckInModule,
     ModelsModule,
   ],
-  providers: [],
+  providers: [
+    {
+      provide: 'window', useFactory: () => {
+        return window;
+      }
+    },
+    {
+      provide: 'remoteHost', useValue: 'centaurium.sohoffice.local:9000'
+    }
+  ],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {
+}

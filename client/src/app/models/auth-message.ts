@@ -1,13 +1,13 @@
 export enum AuthCommand {
+  HELO = 'HELO',
+  ACK = 'ACK',
   AUTH = 'AUTH',
-  handle = 'HANDLE',
-  token = 'TOKEN'
+  HANDLE = 'HANDLE',
+  TOKEN = 'TOKEN'
 }
 
-export class AuthMessage {
-  authHandle?: string;
-  accessToken?: string;
-
-  constructor(public command: AuthCommand) {
-  }
+export interface AuthMessage {
+  handle?: string;
+  token?: string;
+  command?: AuthCommand;
 }
