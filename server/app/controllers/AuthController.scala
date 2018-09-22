@@ -3,19 +3,20 @@ package controllers
 import java.util.concurrent.TimeUnit
 
 import actors.UserAuthActor.AuthMessage
-import actors.{AuthEventBus, AuthWorkerActor, UserAuthActor}
+import actors.{AuthEvents, AuthWorkerActor, UserAuthActor}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.stream.Materializer
 import javax.inject.{Inject, Named}
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.{AbstractController, ControllerComponents, WebSocket}
 import akka.util.Timeout
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext
 
 class AuthController @Inject()(
   cc: ControllerComponents,
-  authEventBus: AuthEventBus,
+  authEventBus: AuthEvents,
   @Named("auth-worker-actor") authWorker: ActorRef
 )(implicit system: ActorSystem, materialier: Materializer, ec: ExecutionContext) extends AbstractController(cc) {
 
@@ -27,7 +28,7 @@ class AuthController @Inject()(
     */
   def channel = WebSocket.accept[AuthMessage, AuthMessage] { request =>
     ActorFlow.actorRef { out =>
-      UserAuthActor.props(out, authEventBus)
+      UserAuthActor.props(out, authWorker, authEventBus)
     }
   }
 
@@ -36,11 +37,14 @@ class AuthController @Inject()(
     *
     * We relay the message to authWorker and allow authWorker to notify the channel actors.
     *
-    * @param id
+    * @param handle
     * @return
     */
-  def callback(id: String) = Action { _ =>
-    authEventBus.publish(AuthEventBus.Authenticated(id))
+  def callback(handle: String) = Action { _ =>
+    logger.info(s"Receive authentication callback from auth provider for $handle")
+    authWorker ! AuthEvents.Authenticated(handle)
     Ok("ok")
   }
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
 }

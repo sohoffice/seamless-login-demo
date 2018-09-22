@@ -17,3 +17,13 @@
 @import "~bootstrap/scss/images";
 @import "~bootstrap/scss/jumbotron";
 @import "reset";
+
+.h-90 {
+  height: 90% !important;
+}
+.h-80 {
+  height: 80% !important;
+}
+.ov-scroll {
+  overflow: scroll;
+}

@@ -3,19 +3,32 @@ package actors
 import akka.actor.Actor
 import javax.inject.Inject
 import org.slf4j.{LoggerFactory, MarkerFactory}
+import services.UserService
+
+import scala.concurrent.ExecutionContext
 
 class AuthWorkerActor @Inject()(
-  eventBus: AuthEventBus
-) extends Actor {
-
-  // Register myself as a subscriber on the event bus. So we're notified the start / finalize events.
-  eventBus.subscribe(self, "auth-event-bus")
+  eventBus: AuthEvents,
+  userService: UserService
+)(implicit ec: ExecutionContext) extends Actor {
 
   override def receive: Receive = {
-    case AuthEventBus.Start(handle) =>
+    case AuthEvents.Start(handle) =>
       logger.info(marker, s"Start auth flow for $handle")
-    case AuthEventBus.Finalize(handle) =>
+    case AuthEvents.Authenticated(handle) =>
+      logger.info(marker, s"User is authenticated")
+      this.userService.createUser map { userId =>
+        logger.info(marker, s"User $userId was created.")
+        val msg = AuthEvents.UserToken(handle, userId, userId.toString)
+        logger.debug(marker, s"Publishing user token message: $msg")
+        eventBus.publish(msg)
+
+        sender() ! "ok"
+      }
+    case AuthEvents.Finalize(handle) =>
       logger.info(marker, s"Finalize auth flow for $handle")
+    case x =>
+      logger.debug(s"auth-worker received unknown event: $x")
   }
 
 

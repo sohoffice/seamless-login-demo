@@ -64,6 +64,8 @@ export class SocketWorker<T> {
   }
 
   close() {
+    this.subject.complete();
+    this.socket.close();
   }
 
 }

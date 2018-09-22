@@ -3,7 +3,8 @@ export enum AuthCommand {
   ACK = 'ACK',
   AUTH = 'AUTH',
   HANDLE = 'HANDLE',
-  TOKEN = 'TOKEN'
+  TOKEN = 'TOKEN',
+  PING = 'PING'
 }
 
 export interface AuthMessage {

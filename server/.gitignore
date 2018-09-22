@@ -8,3 +8,4 @@ target
 /RUNNING_PID
 /.excludes.txt
 bin/sync-centaurium.sh
+conf/generated.keystore

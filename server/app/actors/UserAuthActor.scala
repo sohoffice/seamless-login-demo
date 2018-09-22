@@ -19,7 +19,8 @@ import scala.concurrent.ExecutionContext
   */
 class UserAuthActor(
   out: ActorRef,
-  eventBus: AuthEventBus
+  authWorker: ActorRef,
+  eventBus: AuthEvents
 )(implicit ec: ExecutionContext) extends Actor {
 
   import UserAuthActor._
@@ -38,7 +39,7 @@ class UserAuthActor(
     case AuthMessage(cmd, _, _) if cmd == AuthCommand.HELO =>
       logger.debug(marker, "Client initiate auth flow.")
       if(!started) {
-        eventBus.publish(AuthEventBus.Start(id))
+        authWorker ! AuthEvents.Start(id)
         started = true
       } else {
         logger.warn(s"Auth flow already started, ignore the request.")
@@ -46,23 +47,23 @@ class UserAuthActor(
       out ! ACK
     case AuthMessage(cmd, _, _) if cmd == AuthCommand.AUTH =>
       out ! createHandleMessage(id)
-    case AuthEventBus.Authenticated(handle) if handle == id =>
-      out ! createTokenMessage("some token")
+    case AuthEvents.UserToken(handle, userId, token) if handle == id =>
+      out ! createTokenMessage(token)
     case x =>
-      logger.trace(marker, s"Receive unknown message of type ${x.getClass.getName}. $x")
+      logger.debug(marker, s"Receive unknown message of type ${x.getClass.getName}. $x")
   }
 
   override def aroundPostStop(): Unit = {
     logger.debug(marker, s"Stop actor $id")
-    out ! "finalized"
-    eventBus.publish(AuthEventBus.Finalize(id))
+    authWorker ! AuthEvents.Finalize(id)
 
     super.postStop()
   }
 }
 
 object UserAuthActor {
-  def props(out: ActorRef, eventBus: AuthEventBus)(implicit ec: ExecutionContext) = Props(new UserAuthActor(out, eventBus))
+  def props(out: ActorRef, authWorker: ActorRef, eventBus: AuthEvents)(implicit ec: ExecutionContext) =
+    Props(new UserAuthActor(out, authWorker, eventBus))
 
   object AuthCommand extends Enumeration {
     type AuthCommand = Value

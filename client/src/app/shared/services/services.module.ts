@@ -1,7 +1,8 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {NgModule} from '@angular/core';
+import {CommonModule} from '@angular/common';
 import {SocketService} from './socket.service';
 import {IdentityService} from './identity.service';
+import {CheckInService} from './check-in.service';
 
 @NgModule({
   imports: [
@@ -10,7 +11,9 @@ import {IdentityService} from './identity.service';
   declarations: [],
   providers: [
     SocketService,
-    IdentityService
+    IdentityService,
+    CheckInService
   ]
 })
-export class ServicesModule { }
+export class ServicesModule {
+}

@@ -1,8 +1,8 @@
 import {Inject, Injectable} from '@angular/core';
-import {SocketService, SocketWorker, WorkerId} from './socket.service';
+import {SocketService, SocketWorker} from './socket.service';
 import {AuthCommand, AuthMessage} from '../../models/auth-message';
-import {Observable, Subject, Subscriber, Subscription} from 'rxjs';
-import {map, tap} from 'rxjs/operators';
+import {interval, Observable, Subject, Subscriber, Subscription} from 'rxjs';
+import {map, tap, finalize} from 'rxjs/operators';
 
 @Injectable()
 export class IdentityService {
@@ -10,15 +10,30 @@ export class IdentityService {
   private _authWorker: SocketWorker<AuthMessage>;
   private _authFlow: AuthFlowMachine;
   private _authLog: Subject<string> = new Subject<string>();
+  private $sub1: Subscription;
 
   constructor(private socketService: SocketService,
               @Inject('remoteHost') private remoteHost: string) {
     const url = `ws://${remoteHost}/auth`;
     this._authWorker = this.socketService.getWorker<AuthMessage>(url, JSON.parse, JSON.stringify);
 
+    this.$sub1 = interval(30000).pipe(
+      tap(_ => {
+        const msg = {
+          command: AuthCommand.PING
+        };
+        this._authWorker.send(msg);
+      })
+    ).subscribe(x => {
+    });
+
     // subscribe the inbound messages.
     this._authWorker.asObservable().pipe(
-      map(this.authMessageToString.bind(this))
+      map(this.getAuthMessageToString(' In) ')),
+      finalize(() => {
+        console.log('auth worker complete');
+        this.$sub1.unsubscribe();
+      })
     ).subscribe(this._authLog);
   }
 
@@ -44,7 +59,7 @@ export class IdentityService {
 
     // subscribe the outbound messages
     this._authFlow.outboundObservable.pipe(
-      map(this.authMessageToString.bind(this))
+      map(this.getAuthMessageToString('Out) '))
     ).subscribe(this._authLog);
 
     return observable;
@@ -66,8 +81,10 @@ export class IdentityService {
     return this._authLog;
   }
 
-  private authMessageToString(msg: AuthMessage): string {
-    return `${msg.command} ${msg.handle || ''}${msg.token || ''}`;
+  private getAuthMessageToString(prefix: string = ''): (msg: AuthMessage) => string {
+    return (msg: AuthMessage) => {
+      return `${prefix}${msg.command} ${msg.handle || ''}${msg.token || ''}`;
+    };
   }
 }
 
