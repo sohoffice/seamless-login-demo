@@ -18,6 +18,11 @@ class HomeController @Inject()(
   cc: ControllerComponents
 )(implicit ec: ExecutionContext) extends AbstractController(cc) {
 
+  def index = Action { _ =>
+    // Redirect to /index.html so the angular client can be loaded.
+    Redirect("/index.html")
+  }
+
   def getCheckIns() = Action.async { _ =>
     checkInService.get
       .map(x => Ok(Json.toJson(x)))

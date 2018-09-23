@@ -12,13 +12,13 @@ export class CheckInService {
   }
 
   getCheckins(): Observable<CheckInRecord[]> {
-    return this.http.get(`http://${this.remoteHost}/check-in`).pipe(
+    return this.http.get(`https://${this.remoteHost}/api/check-in`).pipe(
       map(this.mapToCheckInRecord.bind(this))
     );
   }
 
   checkIn(userId: number): Observable<any> {
-    return this.http.post(`http://${this.remoteHost}/check-in?userId=${userId}`, {});
+    return this.http.post(`https://${this.remoteHost}/api/check-in?userId=${userId}`, {});
   }
 
   private mapToCheckInRecord(x: any): CheckInRecord[] {

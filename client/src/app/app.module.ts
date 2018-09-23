@@ -25,7 +25,7 @@ import {CheckInModule} from './check-in/check-in.module';
       }
     },
     {
-      provide: 'remoteHost', useValue: 'centaurium.sohoffice.local:9000'
+      provide: 'remoteHost', useValue: 'seamless-login-demo.herokuapp.com'
       // provide: 'remoteHost', useValue: 'localhost:9000'
     }
   ],

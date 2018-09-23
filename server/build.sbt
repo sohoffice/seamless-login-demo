@@ -3,6 +3,8 @@ organization := "com.sohoffice"
 
 version := "1.0-SNAPSHOT"
 
+herokuAppName in Compile := "seamless-login-demo"
+
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.12.6"

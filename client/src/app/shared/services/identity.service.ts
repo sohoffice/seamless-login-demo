@@ -14,7 +14,7 @@ export class IdentityService {
 
   constructor(private socketService: SocketService,
               @Inject('remoteHost') private remoteHost: string) {
-    const url = `ws://${remoteHost}/auth`;
+    const url = `wss://${remoteHost}/api/auth`;
     this._authWorker = this.socketService.getWorker<AuthMessage>(url, JSON.parse, JSON.stringify);
 
     this.$sub1 = interval(30000).pipe(

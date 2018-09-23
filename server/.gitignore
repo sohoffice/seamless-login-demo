@@ -9,3 +9,4 @@ target
 /.excludes.txt
 bin/sync-centaurium.sh
 conf/generated.keystore
+public/*
