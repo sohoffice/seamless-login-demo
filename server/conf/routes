@@ -8,6 +8,7 @@ GET         /api/auth                controllers.AuthController.channel
 POST        /api/callback            controllers.AuthController.callback(handle: String)
 
 GET         /api/check-in            controllers.HomeController.getCheckIns
++ nocsrf
 POST        /api/check-in            controllers.HomeController.checkIn(userId: Int)
 
 GET         /external/login          controllers.ExternalAuthController.login(handle: String)
