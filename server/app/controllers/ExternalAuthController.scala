@@ -1,16 +1,12 @@
 package controllers
 
-import actors.AuthEvents
-import akka.actor.ActorRef
-import akka.pattern.ask
 import forms.SignInData
-import javax.inject.{Inject, Named}
+import javax.inject.Inject
 import org.slf4j.LoggerFactory
 import play.api.libs.ws.WSClient
 import play.api.mvc.{AbstractController, ControllerComponents}
-import play.api.routing.Router
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class ExternalAuthController @Inject()(
   cc: ControllerComponents,
@@ -21,18 +17,13 @@ class ExternalAuthController @Inject()(
     Ok(views.html.login(handle))
   }
 
-  def signIn = Action.async { implicit req =>
+  def signIn = Action { implicit req =>
     SignInData.signInForm.bindFromRequest().fold(
       errors => {
-        Future.successful(BadRequest)
+        BadRequest
       },
       data => {
-        val url = routes.AuthController.callback(data.handle).absoluteURL()
-        logger.info(s"Sending callback to $url")
-        wsClient.url(url).post("") map { resp =>
-          logger.info(s"Response $resp")
-          Ok(views.html.signIn(resp.toString))
-        }
+        Redirect(routes.AuthController.callback(data.handle))
       }
     )
   }

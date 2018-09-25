@@ -1,20 +1,12 @@
-@(cbResp: String)
+@()
 
 @layout {
   <h3>Login successful</h3>
 
-  <h4 class="mt-5">Callback response:</h4>
-  <pre>
-    @cbResp
-  </pre>
-
-  <p class="mt-5 text-muted">
-    If you see 200 as the callback response code. The callback is successful.
-    The angular client should have received the token, and your fake user has finished the check in.
-  </p>
-
   <p class="mt-5">
-    Please close the window
+    You should see the check-in successful.
+    <br>
+    Please close the window now.
     <button onclick="window.close()">Close</button>
   </p>
 }

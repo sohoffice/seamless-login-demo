@@ -10,29 +10,17 @@ export class IdentityService {
   private _authWorker: SocketWorker<AuthMessage>;
   private _authFlow: AuthFlowMachine;
   private _authLog: Subject<string> = new Subject<string>();
-  private $sub1: Subscription;
 
   constructor(private socketService: SocketService,
               @Inject('remoteHost') private remoteHost: string) {
     const url = `wss://${remoteHost}/api/auth`;
     this._authWorker = this.socketService.getWorker<AuthMessage>(url, JSON.parse, JSON.stringify);
 
-    this.$sub1 = interval(30000).pipe(
-      tap(_ => {
-        const msg = {
-          command: AuthCommand.PING
-        };
-        this._authWorker.send(msg);
-      })
-    ).subscribe(x => {
-    });
-
     // subscribe the inbound messages.
     this._authWorker.asObservable().pipe(
-      map(this.getAuthMessageToString(' In) ')),
+      map(getAuthMessageToString(' In) ')),
       finalize(() => {
         console.log('auth worker complete');
-        this.$sub1.unsubscribe();
       })
     ).subscribe(this._authLog);
   }
@@ -49,9 +37,9 @@ export class IdentityService {
    * - AuthFlowState.Handle, We've received the handle, open the login dialog to auth provider.
    * - AuthFlowState.Authenticated, The user has been authenticated.
    *
-   * @return {Observable<AuthFlowState>}
+   * @return {AuthFlowMachine}
    */
-  startAuthProcess(): Observable<AuthFlowState> {
+  startAuthProcess(): AuthFlowMachine {
     if (this._authFlow === undefined) {
       this._authFlow = new AuthFlowMachine(this._authWorker);
     }
@@ -59,32 +47,20 @@ export class IdentityService {
 
     // subscribe the outbound messages
     this._authFlow.outboundObservable.pipe(
-      map(this.getAuthMessageToString('Out) '))
+      map(getAuthMessageToString('Out) '))
     ).subscribe(this._authLog);
 
-    return observable;
-  }
+    observable.pipe(
+      finalize(() => {
+        this._authFlow = undefined;
+      })
+    ).subscribe(dummyFunction);
 
-  get handle(): string {
-    if (this._authFlow !== undefined) {
-      return this._authFlow.handle;
-    }
-  }
-
-  get token(): string {
-    if (this._authFlow !== undefined) {
-      return this._authFlow.token;
-    }
+    return this._authFlow;
   }
 
   get logObservable(): Observable<string> {
     return this._authLog;
-  }
-
-  private getAuthMessageToString(prefix: string = ''): (msg: AuthMessage) => string {
-    return (msg: AuthMessage) => {
-      return `${prefix}${msg.command} ${msg.handle || ''}${msg.token || ''}`;
-    };
   }
 }
 
@@ -97,7 +73,7 @@ export enum AuthFlowState {
   Discarded = 5
 }
 
-class AuthFlowMachine {
+export class AuthFlowMachine {
   private state: AuthFlowState;
   private _handle: string;
   private _token: string;
@@ -106,12 +82,24 @@ class AuthFlowMachine {
   private _observable: Observable<AuthFlowState>;
   private _outboundEmitter: Subscriber<AuthMessage>;
   private _outboundObservable: Observable<AuthMessage>;
-  private $sub: Subscription;
+  private $sub1: Subscription;
+  private $sub2: Subscription;
 
   constructor(private authWorker: SocketWorker<AuthMessage>) {
-    this.$sub = this.authWorker.asObservable().pipe(
+    this.$sub1 = this.authWorker.asObservable().pipe(
       tap(this.progressState.bind(this))
     ).subscribe(x => console.log('AuthFlowMachine received auth message: ', x));
+
+    // Send ping messages to server every 30 seconds to keep the connection alive.
+    this.$sub2 = interval(30000).pipe(
+      tap(_ => {
+        const ping = {
+          command: AuthCommand.PING
+        };
+        this.authWorker.send(ping);
+      })
+    ).subscribe(x => {
+    });
   }
 
   start(): Observable<AuthFlowState> {
@@ -134,6 +122,10 @@ class AuthFlowMachine {
       }, 100);
     }
 
+    return this._observable;
+  }
+
+  get observable(): Observable<AuthFlowState> {
     return this._observable;
   }
 
@@ -184,7 +176,7 @@ class AuthFlowMachine {
         // we should close the channel now.
         this._emitter.complete();
         this._outboundEmitter.complete();
-        this.$sub.unsubscribe();
+        this.$sub1.unsubscribe();
         this.authWorker.close();
 
         return;
@@ -203,4 +195,10 @@ class AuthFlowMachine {
 }
 
 const dummyFunction = _ => {
+};
+
+const getAuthMessageToString = (prefix: string = '') => {
+  return (msg: AuthMessage) => {
+    return `${prefix}${msg.command} ${msg.handle || ''}${msg.token || ''}`;
+  };
 };

@@ -5,14 +5,14 @@
 
 GET         /                        controllers.HomeController.index
 GET         /api/auth                controllers.AuthController.channel
-POST        /api/callback            controllers.AuthController.callback(handle: String)
 
 GET         /api/check-in            controllers.HomeController.getCheckIns
 + nocsrf
 POST        /api/check-in            controllers.HomeController.checkIn(userId: Int)
 
+GET         /callback                controllers.AuthController.callback(handle: String)
 GET         /external/login          controllers.ExternalAuthController.login(handle: String)
 POST        /external/sign-in        controllers.ExternalAuthController.signIn
 
 # Serve client files
-GET         /*file                 controllers.AngularClientController.versioned(path="/public", file: Asset)
+GET         /*file                   controllers.AngularClientController.versioned(path="/public", file: Asset)

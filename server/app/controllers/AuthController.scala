@@ -43,7 +43,7 @@ class AuthController @Inject()(
   def callback(handle: String) = Action { _ =>
     logger.info(s"Receive authentication callback from auth provider for $handle")
     authWorker ! AuthEvents.Authenticated(handle)
-    Ok("ok")
+    Ok(views.html.signIn())
   }
 
   private val logger = LoggerFactory.getLogger(this.getClass)

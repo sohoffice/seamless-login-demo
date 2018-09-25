@@ -1,7 +1,7 @@
 import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
 import {Subscription, of} from 'rxjs';
 import {tap, flatMap} from 'rxjs/operators';
-import {AuthFlowState, IdentityService} from '../../shared/services/identity.service';
+import {AuthFlowMachine, AuthFlowState, IdentityService} from '../../shared/services/identity.service';
 import {CheckInService} from '../../shared/services/check-in.service';
 import {CheckInRecord} from '../../models/check-in-record';
 
@@ -25,6 +25,7 @@ export class CheckInPageComponent implements OnInit, OnDestroy {
 
   private $sub1: Subscription;
   private $sub2: Subscription;
+  private authMachine: AuthFlowMachine;
 
   constructor(private identityService: IdentityService,
               private checkInService: CheckInService,
@@ -45,7 +46,8 @@ export class CheckInPageComponent implements OnInit, OnDestroy {
     if (this.identityService.isSignedIn()) {
       console.log('already signed in');
     } else {
-      this.$sub2 = this.identityService.startAuthProcess().pipe(
+      this.authMachine = this.identityService.startAuthProcess();
+      this.$sub2 = this.authMachine.observable.pipe(
         tap(this.retrieveHandle.bind(this)),
         tap(this.handleAuthenticated.bind(this))
       ).subscribe(x => console.log('Auth flow state', x));
@@ -61,7 +63,7 @@ export class CheckInPageComponent implements OnInit, OnDestroy {
   }
 
   onOpenLoginDialog() {
-    this.window.open(`http://${this.remoteHost}/external/login?handle=${this.handle}`, '_blank',
+    this.window.open(`https://${this.remoteHost}/external/login?handle=${this.handle}`, '_blank',
       'height=500,width=500');
   }
 
@@ -73,7 +75,7 @@ export class CheckInPageComponent implements OnInit, OnDestroy {
 
   private retrieveHandle(x: AuthFlowState) {
     if (x === AuthFlowState.AuthHandle) {
-      this.handle = this.identityService.handle;
+      this.handle = this.authMachine.handle;
 
       this.onOpenLoginDialog();
     }
@@ -82,7 +84,7 @@ export class CheckInPageComponent implements OnInit, OnDestroy {
   private handleAuthenticated(state: AuthFlowState) {
     if (state === AuthFlowState.Authenticated) {
       this.checkInService.checkIn(
-        parseInt(this.identityService.token)
+        parseInt(this.authMachine.token)
       ).pipe(
         tap(this.updateCheckIns.bind(this))
       ).subscribe(x => console.log('check-in-page check in', x));
