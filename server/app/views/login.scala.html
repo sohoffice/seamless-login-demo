@@ -16,9 +16,10 @@
     <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
     <p class="text-muted mt-3 mb-3">
       This is a fake login screen to simulate the process. No matter what you input, the sign in will always succeed.
+      However, if you put invalid email, the browser may not be happy. Just leave it empty and you're through.
     <p class="text-muted">
-      On submitting the form, the server side controller, playing the role of external auth controller, will simulate the flow by calling the
-      callback url with play ws. This is what typical 3rd party auth flow do.
+      On submitting the form, the server side controller, playing the role of external auth controller, will simulate the flow by
+      redirecting to our callback (or redirect) uri. The callback uri will notify the server actor, and therefore to the browser.
     <p class="mt-5 mb-3 text-muted">&copy; 2018</p>
   }
 }

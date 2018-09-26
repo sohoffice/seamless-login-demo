@@ -1,7 +1,7 @@
 import {Inject, Injectable} from '@angular/core';
 import {SocketService, SocketWorker} from './socket.service';
 import {AuthCommand, AuthMessage} from '../../models/auth-message';
-import {interval, Observable, Subject, Subscriber, Subscription} from 'rxjs';
+import {interval, Observable, Subject, Subscriber, Subscription, defer} from 'rxjs';
 import {map, tap, finalize} from 'rxjs/operators';
 
 @Injectable()
@@ -13,16 +13,6 @@ export class IdentityService {
 
   constructor(private socketService: SocketService,
               @Inject('remoteHost') private remoteHost: string) {
-    const url = `wss://${remoteHost}/api/auth`;
-    this._authWorker = this.socketService.getWorker<AuthMessage>(url, JSON.parse, JSON.stringify);
-
-    // subscribe the inbound messages.
-    this._authWorker.asObservable().pipe(
-      map(getAuthMessageToString(' In) ')),
-      finalize(() => {
-        console.log('auth worker complete');
-      })
-    ).subscribe(this._authLog);
   }
 
   isSignedIn(): boolean {
@@ -39,24 +29,52 @@ export class IdentityService {
    *
    * @return {AuthFlowMachine}
    */
-  startAuthProcess(): AuthFlowMachine {
-    if (this._authFlow === undefined) {
-      this._authFlow = new AuthFlowMachine(this._authWorker);
+  startAuthProcess(): Observable<AuthFlowMachine> {
+    let authWorkerObs: Observable<SocketWorker<AuthMessage>>;
+    if (this._authWorker === undefined) {
+      const url = `wss://${this.remoteHost}/api/auth`;
+      authWorkerObs = this.socketService.getWorker<AuthMessage>(url, JSON.parse, JSON.stringify);
+    } else {
+      authWorkerObs = defer(() => Promise.resolve(this._authWorker));
     }
-    const observable: Observable<AuthFlowState> = this._authFlow.start();
+    return authWorkerObs.pipe(
+      tap(aw => {
+        if (this._authWorker === undefined) {
+          this._authWorker = aw;
 
-    // subscribe the outbound messages
-    this._authFlow.outboundObservable.pipe(
-      map(getAuthMessageToString('Out) '))
-    ).subscribe(this._authLog);
+          // subscribe the inbound messages.
+          this._authWorker.asObservable().pipe(
+            map(getAuthMessageToString(' In) ')),
+            finalize(() => {
+              console.log('auth worker complete');
+            })
+          ).subscribe(this._authLog);
+        }
+      }),
+      map(aw => {
+        if (this._authFlow === undefined) {
+          this._authFlow = new AuthFlowMachine(aw);
 
-    observable.pipe(
-      finalize(() => {
-        this._authFlow = undefined;
+          this._authFlow.start();
+
+          // subscribe the outbound messages
+          this._authFlow.outboundObservable.pipe(
+            map(getAuthMessageToString('Out) '))
+          ).subscribe(this._authLog);
+
+          this._authFlow.observable.pipe(
+            finalize(() => {
+              this._authFlow = undefined;
+            })
+          ).subscribe(dummyFunction);
+        } else {
+          // The auth flow is re-started
+          this._authFlow.start();
+        }
+
+        return this._authFlow;
       })
-    ).subscribe(dummyFunction);
-
-    return this._authFlow;
+    );
   }
 
   get logObservable(): Observable<string> {
@@ -102,8 +120,8 @@ export class AuthFlowMachine {
     });
   }
 
-  start(): Observable<AuthFlowState> {
-    if (this.state === undefined) {
+  start(): void {
+    if (this.state === undefined && this._observable === undefined) {
       // create the observables
       this._observable = Observable.create(observer => {
         this._emitter = observer;
@@ -112,17 +130,18 @@ export class AuthFlowMachine {
       this._outboundObservable = Observable
         .create(observer => this._outboundEmitter = observer);
       this._outboundObservable.subscribe(dummyFunction);
-
-      // send the message.
-      const msg = {
-        command: AuthCommand.HELO
-      };
-      setTimeout(() => {
-        this.send(msg, AuthFlowState.Helo);
-      }, 100);
+    } else {
+      // let the protocol to start from the beginning.
+      this.state = undefined;
     }
 
-    return this._observable;
+    // send the message.
+    const msg = {
+      command: AuthCommand.HELO
+    };
+    setTimeout(() => {
+      this.send(msg, AuthFlowState.Helo);
+    }, 100);
   }
 
   get observable(): Observable<AuthFlowState> {

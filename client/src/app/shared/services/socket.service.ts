@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {from, Observable, Observer, Subject} from 'rxjs';
-import {publishReplay, refCount} from 'rxjs/operators';
+import {publishReplay, refCount, first} from 'rxjs/operators';
 
 @Injectable()
 export class SocketService {
@@ -13,11 +13,19 @@ export class SocketService {
   constructor() {
   }
 
-  getWorker<T>(url: string, reader: (s: string) => T, writer: (msg: T) => string): SocketWorker<T> {
+  getWorker<T>(url: string, reader: (s: string) => T, writer: (msg: T) => string): Observable<SocketWorker<T>> {
     if (!(url in this.socketWorkers)) {
       this.socketWorkers[url] = new SocketWorker(url, reader, writer);
     }
-    return this.socketWorkers[url];
+    return Observable.create(observer => {
+      setInterval(() => {
+        if (this.socketWorkers[url] && this.socketWorkers[url].isReady()) {
+          observer.next(this.socketWorkers[url]);
+        }
+      }, 50);
+    }).pipe(
+      first()
+    );
   }
 
 }
@@ -53,6 +61,10 @@ export class SocketWorker<T> {
     };
 
     this.subject = Subject.create(observer, observable);
+  }
+
+  isReady(): boolean {
+    return this.socket.readyState === WebSocket.OPEN;
   }
 
   asObservable(): Observable<T> {

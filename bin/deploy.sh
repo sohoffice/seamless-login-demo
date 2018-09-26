@@ -5,12 +5,12 @@ DIR="$BINDIR/.."
 
 echo "Build client"
 cd $DIR/client
-ng build --aot --prod
+ng build
 
 echo "Replace server/public with built angular app"
-rm -rf "$DIR/server/public/c"
-mkdir -p "$DIR/server/public/c"
-cp -R $DIR/client/dist/client/* "$DIR/server/public/c"
+rm -rf "$DIR/server/public"
+mkdir -p "$DIR/server/public"
+cp -R $DIR/client/dist/client/* "$DIR/server/public"
 
 echo "Build server"
 cd $DIR/server

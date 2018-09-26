@@ -4,6 +4,7 @@ import {tap, flatMap} from 'rxjs/operators';
 import {AuthFlowMachine, AuthFlowState, IdentityService} from '../../shared/services/identity.service';
 import {CheckInService} from '../../shared/services/check-in.service';
 import {CheckInRecord} from '../../models/check-in-record';
+import {MatSnackBar} from '@angular/material';
 
 const MAX_MESSAGES = 30;
 
@@ -29,6 +30,7 @@ export class CheckInPageComponent implements OnInit, OnDestroy {
 
   constructor(private identityService: IdentityService,
               private checkInService: CheckInService,
+              private snackBar: MatSnackBar,
               @Inject('window') private window: Window,
               @Inject('remoteHost') private remoteHost: string) {
   }
@@ -45,20 +47,28 @@ export class CheckInPageComponent implements OnInit, OnDestroy {
   onCheckIn() {
     if (this.identityService.isSignedIn()) {
       console.log('already signed in');
+      this.snackBar.open('Already signed in', 'OK');
     } else {
-      this.authMachine = this.identityService.startAuthProcess();
-      this.$sub2 = this.authMachine.observable.pipe(
-        tap(this.retrieveHandle.bind(this)),
-        tap(this.handleAuthenticated.bind(this))
-      ).subscribe(x => console.log('Auth flow state', x));
+      this.identityService.startAuthProcess().pipe(
+        tap(am => {
+          this.authMachine = am;
 
-      this.$sub1 = this.identityService.logObservable.pipe(
-        tap(
-          this.pushMessage.bind(this)
-        )
-      ).subscribe(x => {
-        console.log('Auth message: ', x);
-      });
+          this.$sub2 = am.observable.pipe(
+            tap(this.retrieveHandle.bind(this)),
+            tap(this.handleAuthenticated.bind(this))
+          ).subscribe(x => console.log('Auth flow state', x));
+        })
+      ).subscribe(x => console.log('start auth process', x));
+
+      if (this.$sub1 === undefined) {
+        this.$sub1 = this.identityService.logObservable.pipe(
+          tap(
+            this.pushMessage.bind(this)
+          )
+        ).subscribe(x => {
+          console.log('Auth message: ', x);
+        });
+      }
     }
   }
 
@@ -92,9 +102,9 @@ export class CheckInPageComponent implements OnInit, OnDestroy {
   }
 
   private pushMessage(msg: string) {
-    this.messages.push(msg);
+    this.messages.splice(0, 0, msg);
     if (this.messages.length > MAX_MESSAGES) {
-      this.messages.splice(0, this.messages.length - MAX_MESSAGES);
+      this.messages.splice(MAX_MESSAGES, this.messages.length - MAX_MESSAGES);
     }
   }
 }
