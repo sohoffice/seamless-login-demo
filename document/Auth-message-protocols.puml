@@ -8,8 +8,8 @@ Server -> User: ACK
 User -> Server: AUTH
 Server -> User: HANDLE <some handle>
 
-User -> "Auth provider": (Open login page)
-"Auth provider" -> Server: (Callback)
+User -> "Auth provider": (Open login page with handle)
+"Auth provider" -> Server: (redirect with handle)
 
 Server -> User: TOKEN <token>
 @enduml

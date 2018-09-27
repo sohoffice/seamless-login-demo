@@ -6,8 +6,9 @@ start
 |Auth provider (Redirect)|
 :Go to 3rd party login page;
 :User authorize;
-|Server|
-:receive callback;
+|Server (Redirect)|
+:go to redirect uri;
+:Load the user profile;
 |SPA|
 :reload application
 to previous page;

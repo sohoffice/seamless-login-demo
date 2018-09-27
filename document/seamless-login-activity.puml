@@ -14,7 +14,8 @@ in a separate window;
 :Show login window;
 :User authorize;
 |Server|
-:Receive callback;
+:go to redirect uri;
+:Load the user profile;
 :Push authenticated message
 to SPA;
 |SPA|
