@@ -35,3 +35,16 @@ Protocols
    Server -> Client.
    When the auth provider confirms the login. Server generates the token
    and send to client.
+
+Online demo
+-----------
+
+[Running on Heroku](https://seamless-login-demo.herokuapp.com)
+
+
+Related blog
+------------
+
+[Read on medium](https://medium.com/@sohoffice/authenticate-spa-application-with-3rd-party-auth-provider-c298f2b0795)
+
+sohoffice, Happy coding ~
